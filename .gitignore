@@ -1,0 +1,31 @@
+# Compiled Java files
+*.class
+target/
+
+# Maven
+.mvn/
+mvnw
+mvnw.cmd
+
+# NetBeans specific
+nbproject/private/
+build/
+nbbuild/
+dist/
+nbdist/
+nb-configuration.xml
+
+# IDE files (IntelliJ, Eclipse, VS Code)
+.idea/
+*.iml
+.classpath
+.project
+.settings/
+.vscode/
+
+# Logs
+*.log
+
+# OS generated files
+.DS_Store
+Thumbs.db
