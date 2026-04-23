@@ -16,17 +16,17 @@ public class DiscoveryResource {
     public Response getApiMetadata() {
         Map<String, Object> metadata = new HashMap<>();
         
-        // API Version Info
+        // Basic Application Identity
         metadata.put("apiName", "Smart Campus API");
         metadata.put("version", "1.0.0");
         
-        // Administrative Contact 
+        // Support Contact Information
         Map<String, String> contact = new HashMap<>();
         contact.put("name", "Smart Campus Admin");
         contact.put("email", "admin@university.edu");
         metadata.put("contact", contact);
         
-        // Resource Collections Map
+        // Available Endpoints Directory
         Map<String, String> resources = new HashMap<>();
         resources.put("rooms", "/api/v1/rooms");
         resources.put("sensors", "/api/v1/sensors");

@@ -10,7 +10,7 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class DataStore {
-    // Thread-safe numeric counters for generating unique String IDs
+    // Concurrency-safe generators for building unique textual IDs
     private static final AtomicInteger roomCounter = new AtomicInteger(1);
     private static final AtomicInteger sensorCounter = new AtomicInteger(1);
     private static final AtomicInteger readingCounter = new AtomicInteger(1);
@@ -19,37 +19,38 @@ public class DataStore {
     public static final List<Sensor> sensors = new ArrayList<>();
     public static final Map<String, List<SensorReading>> readingsBySensor = new HashMap<>();
 
-    // Static initializer with sample data
+    // Bootstrapping the data context
     static {
-        // Add initial rooms with String IDs
-        Room room1 = new Room("R" + roomCounter.getAndIncrement(), "Lecture Hall A", 120);
-        Room room2 = new Room("R" + roomCounter.getAndIncrement(), "Lab 3", 30);
+        // Generate initial campus locations
+        Room room1 = new Room("R" + roomCounter.getAndIncrement(), "Library", 140);
+        Room room2 = new Room("R" + roomCounter.getAndIncrement(), "Lab 6", 35);
         rooms.add(room1);
         rooms.add(room2);
 
-        // Add initial sensors
+        // Setup base campus hardware
         Sensor sensor1 = new Sensor("S" + sensorCounter.getAndIncrement(), "CO2", "ACTIVE", 450.0, room1.getId());
         Sensor sensor2 = new Sensor("S" + sensorCounter.getAndIncrement(), "OCCUPANCY", "ACTIVE", 85.0, room1.getId());
-        Sensor sensor3 = new Sensor("S" + sensorCounter.getAndIncrement(), "LIGHTING", "MAINTENANCE", 0.0, room2.getId());
+        Sensor sensor3 = new Sensor("S" + sensorCounter.getAndIncrement(), "LIGHTING", "MAINTENANCE", 0.0,
+                room2.getId());
         sensors.add(sensor1);
         sensors.add(sensor2);
         sensors.add(sensor3);
 
-        // Add sensor IDs to corresponding rooms
+        // Link the hardware to their respective locations
         room1.getSensorIds().add(sensor1.getId());
         room1.getSensorIds().add(sensor2.getId());
         room2.getSensorIds().add(sensor3.getId());
 
-        // Initialize empty reading lists for each sensor
+        // Set up blank history arrays for each monitor
         readingsBySensor.put(sensor1.getId(), new ArrayList<>());
         readingsBySensor.put(sensor2.getId(), new ArrayList<>());
         readingsBySensor.put(sensor3.getId(), new ArrayList<>());
 
-        // Sample readings
-        long now = System.currentTimeMillis();
-        addReading(sensor1.getId(), new SensorReading("RD" + readingCounter.getAndIncrement(), now - 3600000, 450.0));
-        addReading(sensor1.getId(), new SensorReading("RD" + readingCounter.getAndIncrement(), now, 455.0));
-        addReading(sensor2.getId(), new SensorReading("RD" + readingCounter.getAndIncrement(), now - 1800000, 85.0));
+        // Seed some historical metrics
+        long currentTimeMs = System.currentTimeMillis();
+        addReading(sensor1.getId(), new SensorReading("RD" + readingCounter.getAndIncrement(), currentTimeMs - 3600000, 450.0));
+        addReading(sensor1.getId(), new SensorReading("RD" + readingCounter.getAndIncrement(), currentTimeMs, 455.0));
+        addReading(sensor2.getId(), new SensorReading("RD" + readingCounter.getAndIncrement(), currentTimeMs - 1800000, 85.0));
     }
 
     public static String nextRoomId() {

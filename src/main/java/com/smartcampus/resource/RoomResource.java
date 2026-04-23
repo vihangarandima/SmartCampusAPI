@@ -16,16 +16,16 @@ import java.util.List;
 @Consumes(MediaType.APPLICATION_JSON)
 public class RoomResource {
 
-    // GET /api/v1/rooms - List all rooms
+    // Retrieve entire campus room catalog
     @GET
-    public List<Room> getAllRooms() {
+    public List<Room> fetchAllRooms() {
         return DataStore.rooms;
     }
 
-    // GET /api/v1/rooms/{roomId} - Get a specific room
+    // Fetch details of an individual room by passing its ID in the URL
     @GET
     @Path("/{roomId}")
-    public Response getRoomById(@PathParam("roomId") String roomId) {
+    public Response obtainRoomById(@PathParam("roomId") String roomId) {
         Room room = DataStore.rooms.stream()
                 .filter(r -> r.getId().equals(roomId))
                 .findFirst()
@@ -37,20 +37,20 @@ public class RoomResource {
         return Response.ok(room).build();
     }
 
-    // POST /api/v1/rooms - Create a new room
+    // Endpoint to register a new room into the system
     @POST
-    public Response createRoom(Room room) {
-        // Assign a new ID (String)
+    public Response setupNewRoom(Room room) {
+        // Allocate unique ID dynamically
         room.setId(DataStore.nextRoomId());
         DataStore.rooms.add(room);
         URI location = URI.create("/api/v1/rooms/" + room.getId());
         return Response.created(location).entity(room).build();
     }
 
-    // DELETE /api/v1/rooms/{roomId} - Delete a room only if no sensors are assigned
+    // Remove a room (Validation: Fails with 409 if hardware sensors are still mapped to it)
     @DELETE
     @Path("/{roomId}")
-    public Response deleteRoom(@PathParam("roomId") String roomId) {
+    public Response removeRoomSafely(@PathParam("roomId") String roomId) {
         Room room = DataStore.rooms.stream()
                 .filter(r -> r.getId().equals(roomId))
                 .findFirst()

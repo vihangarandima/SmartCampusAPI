@@ -18,22 +18,22 @@ import java.util.stream.Collectors;
 @Consumes(MediaType.APPLICATION_JSON)
 public class SensorResource {
 
-    // GET /api/v1/sensors?type=CO2 
+    // Retrieve sensor list with optional query param filtering
     @GET
-    public List<Sensor> getSensors(@QueryParam("type") String type) {
+    public List<Sensor> fetchCampusSensors(@QueryParam("type") String type) {
         if (type == null || type.isEmpty()) {
             return DataStore.sensors;
         }
-        // Filter by type 
+        // Apply requested filter logic
         return DataStore.sensors.stream()
                 .filter(s -> s.getType().equalsIgnoreCase(type))
                 .collect(Collectors.toList());
     }
 
-    // POST /api/v1/sensors – create new sensor (validates roomId exists)
+    // Register new hardware (Enforces validation on the parent room ID)
     @POST
-    public Response createSensor(Sensor sensor) {
-        // Validate room exists (roomId is String)
+    public Response installNewSensor(Sensor sensor) {
+        // Confirm linked room matches an active location
         Room room = DataStore.rooms.stream()
                 .filter(r -> r.getId().equals(sensor.getRoomId()))
                 .findFirst()
@@ -42,21 +42,21 @@ public class SensorResource {
             throw new LinkedResourceNotFoundException("Room with ID " + sensor.getRoomId() + " does not exist.");
         }
 
-        // Assign new ID
+        // Set system identifier
         sensor.setId(DataStore.nextSensorId());
         DataStore.sensors.add(sensor);
 
-        // Add sensor ID to the room's sensorIds list 
+        // Bind sensor ID to the parent room array
         room.getSensorIds().add(sensor.getId());
 
         URI location = URI.create("/api/v1/sensors/" + sensor.getId());
         return Response.created(location).entity(sensor).build();
     }
 
-    // GET /api/v1/sensors/{sensorId}
+    // Fetch detailed metadata for one sensor
     @GET
     @Path("/{sensorId}")
-    public Response getSensorById(@PathParam("sensorId") String sensorId) {
+    public Response fetchSensorDetails(@PathParam("sensorId") String sensorId) {
         Sensor sensor = DataStore.sensors.stream()
                 .filter(s -> s.getId().equals(sensorId))
                 .findFirst()
@@ -68,9 +68,9 @@ public class SensorResource {
         return Response.ok(sensor).build();
     }
 
-    // Sub-resource locator for /sensors/{sensorId}/readings
+    // Delegate reading endpoints to Sub-Resource Locator
     @Path("/{sensorId}/readings")
-    public SensorReadingResource getSensorReadingResource(@PathParam("sensorId") String sensorId) {
+    public SensorReadingResource delegateToReadingResource(@PathParam("sensorId") String sensorId) {
         return new SensorReadingResource(sensorId);
     }
 }

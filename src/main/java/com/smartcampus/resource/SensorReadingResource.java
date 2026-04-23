@@ -16,24 +16,24 @@ public class SensorReadingResource {
 
     private final String sensorId;
 
-    // Constructor receives the sensorId from the parent resource (String)
+    // State passed down from the parent path
     public SensorReadingResource(String sensorId) {
         this.sensorId = sensorId;
     }
 
-    // GET /api/v1/sensors/{sensorId}/readings
+    // Fetch full history log
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    public List<SensorReading> getReadings() {
+    public List<SensorReading> extractReadingsLog() {
         return DataStore.getReadingsForSensor(sensorId);
     }
 
-    // POST /api/v1/sensors/{sensorId}/readings
+    // Append a new data metric, altering parent state
     @POST
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    public Response addReading(SensorReading reading) {
-        // Find the parent sensor
+    public Response pushNewMetric(SensorReading reading) {
+        // Retrieve associated sensor
         Sensor sensor = DataStore.sensors.stream()
                 .filter(s -> s.getId().equals(sensorId))
                 .findFirst()
@@ -50,22 +50,22 @@ public class SensorReadingResource {
                 .build();
     }
 
-        // Ensure the sensor is not in MAINTENANCE
+        // Block requests if hardware is inactive
         if ("MAINTENANCE".equalsIgnoreCase(sensor.getStatus())) {
             throw new SensorUnavailableException("Sensor " + sensorId + " is in maintenance mode and cannot accept readings.");
         }
 
-        // Set ID and timestamp
+        // Auto-assign properties
         reading.setId(DataStore.nextReadingId());
-        reading.setTimestamp(System.currentTimeMillis()); // epoch milliseconds
+        reading.setTimestamp(System.currentTimeMillis()); // Set time
 
-        // Store reading in DataStore 
+        // Commit to datastore
         DataStore.addReading(sensorId, reading);
 
-        // Update parent sensor's currentValue
+        // Critical state synchronisation (side-effect)
         sensor.setCurrentValue(reading.getValue());
 
-        // Build response
+        // Formulate correct URI for 201 Created Header
         URI location = URI.create("/api/v1/sensors/" + sensorId + "/readings/" + reading.getId());
         return Response.created(location).entity(reading).build();
     }
